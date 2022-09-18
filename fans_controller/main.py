@@ -289,18 +289,16 @@ class ViewController:
 
 
 def update_view(view: ViewController):
-    try:
-        while(True):
-            view.update_view()
-            view.draw_view()
-            try:
-                cmd = sys.stdin.read().strip()
-                os.system("clear")
-                return cmd
-            except (IOError, TypeError):
-                pass
-    except KeyboardInterrupt:
-        view.set_fans_to_manual()
+    while(True):
+        view.update_view()
+        view.draw_view()
+        try:
+            cmd = sys.stdin.read().strip()
+            os.system("clear")
+            return cmd
+        except (IOError, TypeError):
+            pass
+
 
 
 def command_view(view: ViewController):
@@ -310,7 +308,8 @@ def command_view(view: ViewController):
 
 COMMANDS_REGISTER = {
     "v": update_view,
-    "c": command_view
+    "c": command_view,
+    "q": lambda view: "q"
 }
 
 
@@ -318,7 +317,7 @@ def main():
     view = ViewController()
     cmd = "v"
     try:
-        while(True):
+        while cmd != 'q':
             try:
                 cmd = COMMANDS_REGISTER[cmd](view)
             except KeyError:
@@ -326,6 +325,7 @@ def main():
             
     except KeyboardInterrupt:
         view.set_fans_to_manual()
+    
 
 if __name__ == "__main__":
     main()
