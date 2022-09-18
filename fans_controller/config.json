@@ -20,7 +20,7 @@
             "temp": 168
         },
         {
-            "name": "GPU LEFT",
+            "name": "GPU_LEFT",
             "mode": {
                 "register": 150,
                 "manual": 20,
@@ -39,7 +39,7 @@
             "temp": 171
         },
         {
-            "name": "GPU RIGHT",
+            "name": "GPU_RIGHT",
             "mode": {
                 "register": 154,
                 "manual": 20,

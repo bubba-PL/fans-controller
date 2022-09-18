@@ -1,8 +1,4 @@
 from dataclasses import dataclass
-import imp
-from os import stat
-from pydoc import visiblename
-from uuid import RESERVED_FUTURE
 from settings import (
     NBFC_PATH,
     MAX_TEMP,
@@ -12,7 +8,13 @@ import subprocess
 import json
 import os
 import numpy as np
+import time
+import sys
+import fcntl
 
+
+fl = fcntl.fcntl(sys.stdin.fileno(), fcntl.F_GETFL)
+fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, fl | os.O_NONBLOCK)
 
 PROBE_COMMAND = ['sudo','mono',f'{NBFC_PATH}/ec-probe.exe']
 
@@ -117,7 +119,6 @@ class Fan:
         return int(((value*(max-min))/self.RESOLUTION) + min)
 
     def represent_value(self, val):
-        
         values = {
             'filler': '█',
             'empty': ' ',
@@ -206,13 +207,14 @@ class ViewController:
     
     @staticmethod
     def __make_fans__(fan_configs: "list[dict]"):
-        fan_list: "list[Fan]" = []
+        fans: "dict[str,Fan]" = {}
         for config in fan_configs:
-            fan_list.append(Fan(config))
-        return fan_list
+            fan = Fan(config)
+            fans[fan.name]=fan
+        return fans
     
     def set_fans_to_manual(self):
-        for fan in self.fans:
+        for fan in self.fans.values():
             fan.mode.set_mode("auto")
 
     def __init__(self) -> None:
@@ -223,6 +225,13 @@ class ViewController:
         self.fans = self.__make_fans__(fan_configs)
         self.set_fans_to_manual()
         self.view = ""
+        self.command_register = {
+            'set': self.set_fan_speed,
+            'auto': self.set_fan_mode,
+            'cool_boost': self.set_cool_boost,
+            'help': self.help,
+            'back': lambda : 'v'
+        }
     
     def get_cool_boost_view(self):
         if self.cool_boost.value:
@@ -233,38 +242,88 @@ class ViewController:
     def update_view(self):
         self.view = ""
         self.view += f"cool boost: {self.get_cool_boost_view()}\n"
-        for fan in self.fans:
+        for fan in self.fans.values():
             self.view += fan.get_summary()
 
     def draw_view(self):
         os.system('clear')
         print(self.view)
+    
+    def set_fan_speed(self, fan_name: str, speed: float):
+        speed = float(speed)
+        self.fans[fan_name].set_speed(speed)
+        return 'v'
 
-import time
-def main():
-    # # view = ViewController()
-    # # print(view.fans)
-    # fan = Fan(config_json)
-    # # os.system('clear')
-    # # print(fan.get_summary())
-    # # fan.set_speed(1.0)
-    # try:
-    #     for q in range(100):
-    #         for i in range(10):
-    #             fan.set_speed((10-i)/10)
-    #             summary = fan.get_summary()
-    #             os.system('clear')
-    #             print(summary)
-    #             time.sleep(1)
-    #     fan.mode.set_mode('auto')
-    # except KeyboardInterrupt:
-    #     fan.mode.set_mode('auto')
-    view = ViewController()
+    def set_fan_mode(self, fan_name: str):
+        self.fans[fan_name].mode.set_mode("auto")
+        return 'v'
+
+    def get_input(self):
+        print('what dou you want to do?')
+        while True:
+            try:
+                cmd = sys.stdin.read().strip()
+                return cmd
+            except (IOError, TypeError):
+                time.sleep(1)
+
+    def set_cool_boost(self, on):
+        if on in ["False", '0']:
+            on = 0
+        on = int(bool(on))
+        self.cool_boost.write(on)
+        return 'v'
+
+    def help(self):
+        print(list(self.command_register.keys()))
+        return 'c'
+
+    def command(self):
+
+        # os.system('clear')
+        command_input = self.get_input().split(' ')
+        command = command_input[0]
+        args = command_input[1:]
+        cmd = self.command_register[command](*args)
+        return cmd
+
+
+def update_view(view: ViewController):
     try:
         while(True):
             view.update_view()
             view.draw_view()
-            time.sleep(5)
+            try:
+                cmd = sys.stdin.read().strip()
+                os.system("clear")
+                return cmd
+            except (IOError, TypeError):
+                pass
+    except KeyboardInterrupt:
+        view.set_fans_to_manual()
+
+
+def command_view(view: ViewController):
+    cmd = view.command()
+    return cmd
+
+
+COMMANDS_REGISTER = {
+    "v": update_view,
+    "c": command_view
+}
+
+
+def main():
+    view = ViewController()
+    cmd = "v"
+    try:
+        while(True):
+            try:
+                cmd = COMMANDS_REGISTER[cmd](view)
+            except KeyError:
+                cmd = 'v'
+            
     except KeyboardInterrupt:
         view.set_fans_to_manual()
 
