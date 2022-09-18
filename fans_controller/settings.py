@@ -1,0 +1,3 @@
+NBFC_PATH="/opt/nbfc/"
+MAX_TEMP=110
+CRITICAL_TEMP=85

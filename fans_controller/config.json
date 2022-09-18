@@ -1,0 +1,64 @@
+{
+    "fans": [
+        {
+            "name": "CPU",
+            "mode": {
+                "register": 147,
+                "manual": 20,
+                "auto": 4
+            },
+            "write": {
+                "register": 148,
+                "min": 255,
+                "max": 0
+            },
+            "read": {
+                "register": 149,
+                "min": 255,
+                "max": 85
+            },
+            "temp": 168
+        },
+        {
+            "name": "GPU LEFT",
+            "mode": {
+                "register": 150,
+                "manual": 20,
+                "auto": 4
+            },
+            "write": {
+                "register": 151,
+                "min": 255,
+                "max": 29
+            },
+            "read": {
+                "register": 152,
+                "min": 255,
+                "max": 65
+            },
+            "temp": 171
+        },
+        {
+            "name": "GPU RIGHT",
+            "mode": {
+                "register": 154,
+                "manual": 20,
+                "auto": 4
+            },
+            "write": {
+                "register": 155,
+                "min": 255,
+                "max": 0
+            },
+            "read": {
+                "register": 156,
+                "min": 255,
+                "max": 66
+            },
+            "temp": 171
+        }
+    ],
+    "cool_boost": {
+        "register": 7
+    }
+}
